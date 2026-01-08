@@ -1,25 +1,24 @@
 const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys")
+const readline = require("readline")
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("session")
 
   const sock = makeWASocket({
-    auth: state,
-    printQRInTerminal: true
+    auth: state
   })
 
   sock.ev.on("creds.update", saveCreds)
 
-  sock.ev.on("messages.upsert", async ({ messages }) => {
-    const msg = messages[0]
-    if (!msg.message) return
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  })
 
-    const from = msg.key.remoteJid
-    const text = msg.message.conversation || ""
-
-    if (text === ".ping") {
-      await sock.sendMessage(from, { text: "👑 QUEEN SEW ONLINE (DEMO)" })
-    }
+  rl.question("📱 WhatsApp number (94xxxxxxxxx): ", async (number) => {
+    const code = await sock.requestPairingCode(number)
+    console.log("🔢 PAIRING CODE:", code)
+    rl.close()
   })
 }
 
